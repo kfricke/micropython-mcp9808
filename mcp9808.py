@@ -1,13 +1,13 @@
 from machine import I2C
 
-REG_CFG    = const(1)
-REG_B_UP   = const(2)
-REG_B_LOW  = const(3)
-REG_B_CRIT = const(4)
-REG_A_TEMP = const(5)
-REG_M_ID   = const(6)
-REG_D_ID   = const(7)
-REG_T_RES  = const(8)
+R_CFG    = const(1)
+R_B_UP   = const(2)
+R_B_LOW  = const(3)
+R_B_CRIT = const(4)
+R_A_TEMP = const(5)
+R_M_ID   = const(6)
+R_D_ID   = const(7)
+R_T_RES  = const(8)
 
 T_RES_MIN = const(0)
 T_RES_LOW = const(1)
@@ -26,7 +26,7 @@ class MCP9808(object):
         given address.
         """
         if i2c == None or i2c.__class__ != I2C:
-            raise Exception('I2C object needed as argument!')
+            raise ValueError('I2C object needed as argument!')
         self._i2c = i2c
         self._addr = addr
         self._check_device()
@@ -49,26 +49,26 @@ class MCP9808(object):
         """
         Tries to identify the manufacturer and device identifiers.
         """
-        self._send(REG_M_ID)
+        self._send(R_M_ID)
         self._m_id = self._recv(2)
         if not self._m_id == b'\x00T':
             raise Exception("Invalid manufacturer ID: '%s'!" % self._m_id)
-        self._send(REG_D_ID)
+        self._send(R_D_ID)
         self._d_id = self._recv(2)
         if not self._d_id == b'\x04\x00':
             raise Exception("Invalid device or revision ID: '%s'!" % self._d_id)
 
-    def set_shutdown(self, shdn=True):
+    def set_shutdown_mode(self, shdn=True):
         """
         Set sensor into shutdown mode to draw less than 1 uA and disable
         continous temperature conversion.
         """
-        if shdn not in (False, True):
-            raise Exception('Boolean argument needed to set shutdown mode!')
-        self._send(REG_CFG)
+        if shdn.__class__ != bool:
+            raise ValueError('Boolean argument needed to set shutdown mode!')
+        self._send(R_CFG)
         cfg = self._recv(2)
         b = bytearray()
-        b.append(REG_CFG)
+        b.append(R_CFG)
         if shdn:
             b.append(cfg[0] | 1)
         else:
@@ -76,11 +76,11 @@ class MCP9808(object):
         b.append(cfg[1])
         self._send(b)
 
-    def read(self):
+    def get_temp(self):
         """
         Read temperature in degree celsius and return float value.
         """
-        self._send(REG_A_TEMP)
+        self._send(R_A_TEMP)
         raw = self._recv(2)
         u = (raw[0] & 0x0f) << 4
         l = raw[1] / 16
@@ -90,7 +90,7 @@ class MCP9808(object):
             temp = u + l
         return temp
 
-    def read_int(self):
+    def get_temp_int(self):
         """
         Read a temperature in degree celsius and return a tuple of two parts.
         The first part is the decimal patr and the second the fractional part
@@ -98,7 +98,7 @@ class MCP9808(object):
         This method does avoid floating point arithmetic completely to support
         plattforms missing float support.
         """
-        self._send(REG_A_TEMP)
+        self._send(R_A_TEMP)
         raw = self._recv(2)
         u = (raw[0] & 0xf) << 4
         l = raw[1] >> 4
@@ -114,9 +114,9 @@ class MCP9808(object):
         """
         Sets the temperature resolution.
         """
-        if r not in [0, 1, 2, 3]:
-            raise Exception('Invalid temperature resolution requested!')
+        if r not in [T_RES_MIN, T_RES_LOW, T_RES_AVG, T_RES_MAX]:
+            raise ValueError('Invalid temperature resolution requested!')
         b = bytearray()
-        b.append(REG_T_RES)
+        b.append(R_T_RES)
         b.append(r)
         self._send(b)
