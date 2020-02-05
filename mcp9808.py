@@ -134,3 +134,32 @@ class MCP9808(object):
         b.append(R_T_RES)
         b.append(r)
         self._send(b)
+
+    def _debug_config(self, cfg=None):
+        """
+        Prints the first 9 bits of the config register mapped to human
+        readable descriptions
+        """
+        if not cfg:
+            self._send(REG_CONFIG)
+            cfg = self._recv(2)
+        
+        # meanings[a][b] with a the bit index (LSB order),
+        # b=0 the config description and b={bit value}+1 the value description 
+        meanings = [
+            ["Alert output mode", "Comparator", "Interrupt"],
+            ["Alert polarity", "Active-low", "Active-high"],
+            ["Alert Selector", "All", "Only Critical"],
+            ["Alert enabled", "False", "True"],
+            ["Alert status", "Not asserted", "Asserted as set by mode"],
+            ["Interrupt clear bit", "0", "1"],
+            ["Window [low, high] locked", "Unlocked", "Locked"],
+            ["Critical locked", "Unlocked", "Locked"],
+            ["Shutdown", "False", "True"]
+        ]
+
+        print("Raw config: {}".format(str(cfg)))
+        for i in range(0, min(len(meanings), len(cfg)*8)):
+            part = 0 if i > 7 else 1
+            value = 1 if (cfg[part] & (2**(i % 8))) > 0 else 0
+            print(meanings[i][0] + ": " + meanings[i][1 + value])
