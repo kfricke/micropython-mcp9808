@@ -99,7 +99,7 @@ class MCP9808(object):
         u = (raw[0] & 0x0f) << 4
         l = raw[1] / 16
         if raw[0] & 0x10 == 0x10:
-            temp = 256 - (u + l)
+            temp = (u + l) - 256
         else:
             temp = u + l
         return temp
@@ -117,8 +117,8 @@ class MCP9808(object):
         u = (raw[0] & 0xf) << 4
         l = raw[1] >> 4
         if raw[0] & 0x10 == 0x10:
-            temp = 256 - (u + l)
-            frac = 256 - (raw[1] & 0x0f) * 100 >> 4
+            temp = (u + l) - 256
+            frac = -(raw[1] & 0x0f) * 100 >> 4
         else:
             temp = u + l
             frac = (raw[1] & 0x0f) * 100 >> 4
