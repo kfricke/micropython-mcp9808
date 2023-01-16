@@ -55,6 +55,9 @@ class MCP9808(object):
         """
         Sends the given bufer object over I2C to the sensor.
         """
+        if not isinstance(buf, bytearray):
+            buf = bytearray([buf])
+
         if hasattr(self._i2c, "writeto"):
             # Micropython
             self._i2c.writeto(self._addr, buf)
